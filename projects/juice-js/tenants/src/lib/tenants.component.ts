@@ -2,7 +2,7 @@ import { Component, AfterViewInit, ViewChild } from '@angular/core';
 import { TenantAdminService } from './shared/services/tenant-admin.service';
 import { MatMultiSort, MatMultiSortTableDataSource, TableData  } from 'ngx-mat-multi-sort';
 import { MatPaginator } from '@angular/material/paginator';
-import { TenantBasic } from './shared/models/tenant.model';
+import { Tenant, TenantBasic } from './shared/models/tenant.model';
 import { ActivatedRoute, Router, UrlSerializer } from '@angular/router';
 import { Location } from '@angular/common';
 import { TenantStatus, TenantStatusHelper } from './shared/models/tenant.status';
@@ -15,6 +15,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { TranslateService } from '@ngx-translate/core';
 import { TenantSetting } from './shared/models/tenant.setting.model';
 import { TenantConfiguration } from './shared/tenant-configuration';
+import { TenantSettingsComponent } from './tenant-settings/tenant-settings.component';
 
 @Component({
   selector: 'juice-tenants',
@@ -29,7 +30,7 @@ export class TenantsComponent implements AfterViewInit{
   tenantStatus = TenantStatus;
   statusHelper = TenantStatusHelper;
   statusOptions = Object.values(TenantStatus).filter(value => typeof value === 'string')
-  .map(value => value as TenantStatus);
+  .map(value => this.tenantStatus[value as keyof typeof TenantStatus]);
 
   get statuses(){
     return this.form.get("statuses");
@@ -67,32 +68,27 @@ export class TenantsComponent implements AfterViewInit{
       this.table.dataSource = new MatMultiSortTableDataSource<TenantBasic>(new MatMultiSort(), false);
       
       this.table.displayedColumns = this.displayedColumns;
-      
    }
 
-  ngOnInit(): void{
-    this.form = this.fb.group({
-      filterText: [],
-      statuses: []
-    });
-    
+  initRouteEvents(){
     let firstLoad = true;
     this.route.queryParams.subscribe(params =>{
-      console.debug("route.queryParams.subscribe", params);
+      console.debug("route.queryParams.subscribe", params, firstLoad);
       
       if(firstLoad){
         firstLoad = false;
         this.initFormAndTableEvents();
+        this.getData(true);
+        return;
       }
       
       var q = params['q'] || "";
       this.filterText?.setValue(q);
-      if(params['statuses']=='any'){
+      if(!params['statuses']){
         this.statuses?.setValue([]);
       }else{
-        this.statuses?.setValue(params['statuses']?
-         Array.isArray(params['statuses']) ? params['statuses'] : [params['statuses']]
-         :[TenantStatus.Active, TenantStatus.PendingApproval, TenantStatus.PendingToActive]);
+        this.statuses?.setValue(
+         Array.isArray(params['statuses']) ? params['statuses'] : [params['statuses']]);
       }
 
       this.table.pageSize = params['pageSize']? Number.parseInt(params['pageSize']): 10;
@@ -110,6 +106,14 @@ export class TenantsComponent implements AfterViewInit{
           }
       }
     });
+  }
+
+  ngOnInit(): void{
+    this.form = this.fb.group({
+      filterText: [],
+      statuses: []
+    });
+    this.initRouteEvents();
   }
 
   initFormAndTableEvents(){
@@ -143,9 +147,7 @@ export class TenantsComponent implements AfterViewInit{
     
     if(!fromRoute){
       var statuses = this.statuses?.value;
-      if(!statuses || statuses.length == 0){
-        statuses = 'any';
-      }
+      
       const tree = this.router.createUrlTree([], { queryParams: { 
           q: q,
           statuses: statuses,
@@ -405,7 +407,7 @@ export class TenantsComponent implements AfterViewInit{
   }
 
   settings(id: string){
-    const dialogRef = this.dialog.open(DictBuilderComponent, {
+    const dialogRef = this.dialog.open(TenantSettingsComponent, {
       width: this.options.dialogWidth,
       maxHeight: this.options.dialogMaxHeight,
     });
@@ -418,7 +420,7 @@ export class TenantsComponent implements AfterViewInit{
     this.tenantService.getTenantSettings(id).subscribe({
       next: (settings: TenantSetting[]) => {
         instance.loading = false;
-        instance.models = settings.map(s => new KeyValue(s.key, s.value, s.inherited, s.overridden));
+        instance.setModel(settings.map(s => new KeyValue(s.key, s.value, s.inherited, s.overridden)));
       }, error: (error: any) => {
         this.openSnackBar("Error getting tenant settings!");
         console.debug(error);
@@ -426,7 +428,7 @@ export class TenantsComponent implements AfterViewInit{
     });
 
     instance.saved.subscribe((model: any) => {
-      var settings = instance.models.map(m => new TenantSetting(m.key, m.value, m.inherited));
+      var settings = instance.getModel().map(m => new TenantSetting(m.key, m.value, m.inherited));
       this.tenantService.updateTenantSettings(id, settings).subscribe({
         next: () => {
           this.openSnackBar("Tenant settings was updated!");
@@ -444,7 +446,7 @@ export class TenantsComponent implements AfterViewInit{
   }
 
   rootSettings(){
-    const dialogRef = this.dialog.open(DictBuilderComponent, {
+    const dialogRef = this.dialog.open(TenantSettingsComponent, {
       width: this.options.dialogWidth,
       maxHeight: this.options.dialogMaxHeight,
     });
@@ -457,7 +459,7 @@ export class TenantsComponent implements AfterViewInit{
     this.tenantService.getRootSettings().subscribe({
       next: (settings: TenantSetting[]) => {
         instance.loading = false;
-        instance.models = settings.map(s => new KeyValue(s.key, s.value, false, false));
+        instance.setModel(settings.map(s => new KeyValue(s.key, s.value, false, false)));
       }, error: (error: any) => {
         this.openSnackBar("Error getting root settings!");
         console.debug(error);
@@ -465,7 +467,7 @@ export class TenantsComponent implements AfterViewInit{
     });
 
     instance.saved.subscribe((model: any) => {
-      var settings = instance.models.map(m => new TenantSetting(m.key, m.value, false));
+      var settings = instance.getModel().map(m => new TenantSetting(m.key, m.value, false));
       this.tenantService.updateRootSettings(settings).subscribe({
         next: () => {
           this.openSnackBar("Root settings was updated!");
@@ -478,6 +480,51 @@ export class TenantsComponent implements AfterViewInit{
     });
     instance.cancelled.subscribe(() => {
       this.openSnackBar("Root setting was cancelled!");
+      dialogRef.close();
+    });
+  }
+
+  
+  properties(id: string){
+    const dialogRef = this.dialog.open(TenantSettingsComponent, {
+      width: this.options.dialogWidth,
+      maxHeight: this.options.dialogMaxHeight,
+    });
+    
+    let instance = dialogRef.componentInstance;
+    instance.title = "Tenant properties";
+    instance.loading = true;
+    instance.type = ModelType.StandardObject;
+
+    this.tenantService.getTenant(id).subscribe({
+      next: (tenant: Tenant) => {
+        let props = JSON.parse(tenant.serializedProperties);
+        instance.loading = false;
+        instance.setModel(Object.keys(props).map(s => new KeyValue(s, props[s], false, false)));
+      }, error: (error: any) => {
+        this.openSnackBar("Error getting tenant properties!");
+        console.debug(error);
+      }
+    });
+
+    instance.saved.subscribe((model: any) => {
+      var props = instance.getModel().reduce((acc: any, m: KeyValue) => {
+        acc[m.key] = m.value;
+        return acc;
+      }, {});
+      
+      this.tenantService.updateTenantProperties(id, props).subscribe({
+        next: () => {
+          this.openSnackBar("Tenant properties was updated!");
+          dialogRef.close();
+        }, error: (error: any) => {
+          this.openSnackBar("Error updating tenant properties!");
+          console.debug(error);
+        }
+      });
+    });
+    instance.cancelled.subscribe(() => {
+      this.openSnackBar("Tenant property modification was cancelled!");
       dialogRef.close();
     });
   }
