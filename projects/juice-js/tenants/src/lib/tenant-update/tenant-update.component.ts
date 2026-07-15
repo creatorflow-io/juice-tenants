@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { TenantUpdate } from '../shared/models/tenant.update.model';
 import { TenantAdminService } from '../../public-api';
 import {
@@ -10,9 +10,11 @@ import { CustomErrorStateMatcher } from '../shared/custom-error-state-matcher';
 
 
 @Component({
-  selector: 'juice-tenant-update',
-  templateUrl: './tenant-update.component.html',
-  styleUrls: ['./tenant-update.component.scss']
+    selector: 'juice-tenant-update',
+    templateUrl: './tenant-update.component.html',
+    styleUrls: ['./tenant-update.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
 })
 export class TenantUpdateComponent{
 

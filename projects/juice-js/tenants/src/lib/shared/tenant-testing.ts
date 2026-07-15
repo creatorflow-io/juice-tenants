@@ -4,28 +4,27 @@ import { CommonModule } from '@angular/common';
 import { TenantAdminService } from './services/tenant-admin.service';
 import { TenantConfiguration, TenantConfigurationParams } from './tenant-configuration';
 import { MaterialModule } from './material.module';
-import { HttpClientModule } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi, withXhr } from '@angular/common/http';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { TranslatePipe, TranslateDirective, provideTranslateService } from '@ngx-translate/core';
 
 
-@NgModule({
-  imports: [
-    FormsModule,
-    ReactiveFormsModule,
-    CommonModule,
-    MaterialModule,
-    HttpClientModule,
-    BrowserModule,
-    BrowserAnimationsModule
-  ],
-  exports: [
-    MaterialModule,
-    FormsModule,
-    ReactiveFormsModule,
-    CommonModule
-  ]
-})
+@NgModule({ exports: [
+        MaterialModule,
+        FormsModule,
+        ReactiveFormsModule,
+        CommonModule,
+        TranslatePipe,
+        TranslateDirective
+    ], imports: [FormsModule,
+        ReactiveFormsModule,
+        CommonModule,
+        MaterialModule,
+        BrowserModule,
+        BrowserAnimationsModule,
+        TranslatePipe,
+        TranslateDirective], providers: [provideHttpClient(withXhr(), withInterceptorsFromDi()), provideTranslateService()] })
 export class TenantsTestingModule { 
 
   public static forTest(environment: TenantConfigurationParams): ModuleWithProviders<TenantsTestingModule> {

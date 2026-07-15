@@ -1,10 +1,12 @@
-import { Component, Input, Output, EventEmitter, ViewChild } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { DictBuilderComponent, KeyValue, ModelType } from '@juice-js/dict-builder';
 
 @Component({
-  selector: 'juice-tenant-settings',
-  templateUrl: './tenant-settings.component.html',
-  styleUrls: ['./tenant-settings.component.scss']
+    selector: 'juice-tenant-settings',
+    templateUrl: './tenant-settings.component.html',
+    styleUrls: ['./tenant-settings.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
 })
 export class TenantSettingsComponent{
   @Input() title = "Settings";
