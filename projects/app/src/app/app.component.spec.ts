@@ -1,11 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { AppComponent } from './app.component';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { TenantsModule } from '@juice-js/tenants';
 import { environment } from '../environments/environment';
 import { MaterialModule } from './material.module';
-import { HttpClientModule } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi, withXhr } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -15,21 +15,18 @@ const { tenantOptions } = environment;
 describe('AppComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [
-        RouterTestingModule,
-        TranslateModule.forRoot(),
+    declarations: [
+        AppComponent
+    ],
+    imports: [RouterTestingModule,
         TenantsModule.forRoot(tenantOptions),
         MaterialModule,
         FormsModule,
         ReactiveFormsModule,
         CommonModule,
-        HttpClientModule,
-        BrowserAnimationsModule
-      ],
-      declarations: [
-        AppComponent
-      ],
-    }).compileComponents();
+        BrowserAnimationsModule],
+    providers: [provideHttpClient(withXhr(), withInterceptorsFromDi()), provideTranslateService()]
+}).compileComponents();
   });
 
   it('should create the app', () => {

@@ -1,11 +1,13 @@
-import { Component, OnInit, SimpleChange } from '@angular/core';
+import { Component, OnInit, SimpleChange, ChangeDetectionStrategy } from '@angular/core';
 import { ModelType } from '@juice-js/dict-builder';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss']
+    selector: 'app-root',
+    templateUrl: './app.component.html',
+    styleUrls: ['./app.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
 })
 export class AppComponent implements OnInit{
 
@@ -19,7 +21,7 @@ export class AppComponent implements OnInit{
   }
 
   constructor(private translate: TranslateService) {
-    translate.setDefaultLang('en');
+    translate.setFallbackLang('en');
     translate.use('en');
   }
 

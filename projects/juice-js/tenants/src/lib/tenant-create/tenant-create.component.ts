@@ -1,4 +1,4 @@
-import { Component, OnInit, Output, EventEmitter, Input } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter, Input, ChangeDetectionStrategy } from '@angular/core';
 
 import { TenantCreate, TenantCreated } from '../shared/models/tenant.create.model';
 import { TenantAdminService } from '../../public-api';
@@ -11,9 +11,11 @@ import {
 import { CustomErrorStateMatcher } from '../shared/custom-error-state-matcher';
 
 @Component({
-  selector: 'juice-tenant-create',
-  templateUrl: './tenant-create.component.html',
-  styleUrls: ['./tenant-create.component.scss']
+    selector: 'juice-tenant-create',
+    templateUrl: './tenant-create.component.html',
+    styleUrls: ['./tenant-create.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
 })
 export class TenantCreateComponent implements OnInit{
   model: TenantCreate = new TenantCreate();
